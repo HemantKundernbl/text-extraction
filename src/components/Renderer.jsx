@@ -20,6 +20,7 @@ const PdfViewer = () => {
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
+    setPageNumber(1);
   };
 
   const handleMouseDown = (e) => {
