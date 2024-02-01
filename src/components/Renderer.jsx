@@ -54,7 +54,7 @@ const PdfViewer = () => {
     <div>
       <div {...getRootProps()} style={dropzoneStyle}>
         <input {...getInputProps()} />
-        <p>Drag 'n' drop a PDF file here, or click to select one</p>
+        <p>Drag 'n' drop a PDF file here, or click to browse</p>
       </div>
       {pdfFile && (
         <div
