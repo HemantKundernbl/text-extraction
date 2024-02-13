@@ -78,38 +78,29 @@ const PdfViewer = () => {
       "https://crm.nablasol.net/custom/service/v4_1_custom/nblDmsPdfExtract.php";
 
     // Data to be sent to the API
-    const postData = {
-      allRectangles,
-    };
+    const formData = new FormData();
+    formData.append("pdfFile", pdfFile);
+    formData.append("coordinates", JSON.stringify(allRectangles));
 
     // Fetch request options
     const requestOptions = {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Add any other headers as needed
-      },
-      body: JSON.stringify(postData),
+      body: formData,
     };
 
-    // Send the fetch request
     fetch(apiUrl, requestOptions)
       .then((response) => {
-        // Check if the request was successful (status code 2xx)
         if (response.ok) {
-          // Parse the response body as JSON
+          alert("data sent successfully");
           return response.json();
         } else {
-          // Handle errors
           throw new Error("Failed to send data to the API");
         }
       })
       .then((data) => {
-        // Handle the response data
         console.log("Response from API:", data);
       })
       .catch((error) => {
-        // Handle errors that occurred during the fetch request
         console.error("Error:", error);
       });
   };
@@ -136,6 +127,8 @@ const PdfViewer = () => {
     };
   }, [currentRectangle, handleMouseUp]);
 
+  console.log(pdfFile);
+
   return (
     <div>
       <div {...getRootProps()} style={dropzoneStyle}>
@@ -154,6 +147,7 @@ const PdfViewer = () => {
               pageNumber={pageNumber}
               className="pdf-page"
               renderAnnotationLayer={true}
+              renderTextLayer={false}
             />
           </Document>
           {rectangles.map((rect, index) => (
