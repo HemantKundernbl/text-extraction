@@ -7,6 +7,14 @@
   pointer-events: none;
 }
 
+.rectangle {
+  position: absolute;
+  border: 2px solid red;
+}
+.rectangle.current {
+  border-color: blue;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;

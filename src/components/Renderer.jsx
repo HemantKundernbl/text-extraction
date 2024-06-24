@@ -10,6 +10,10 @@ const PdfViewer = () => {
   const [currentRectangle, setCurrentRectangle] = useState(null);
   const [allRectangles, setAllRectangles] = useState([]);
   const drawingAreaRef = useRef(null);
+  const pageRef = useRef(null);
+  const originalWidthRef = useRef(0);
+  const originalHeightRef = useRef(0);
+  const scaleRef = useRef(1);
 
   pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -23,6 +27,13 @@ const PdfViewer = () => {
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPageNumber(1);
+  };
+
+  const onPageLoadSuccess = (page) => {
+    const viewport = page.getViewport({ scale: 1 });
+    originalWidthRef.current = viewport.width;
+    originalHeightRef.current = viewport.height;
+    scaleRef.current = pageRef.current.offsetWidth / viewport.width;
   };
 
   const handleMouseDown = (e) => {
@@ -42,21 +53,24 @@ const PdfViewer = () => {
         ...prevRect,
         width: offsetX - prevRect.left,
         height: offsetY - prevRect.top,
-        right: offsetX, // Update right coordinate
-        bottom: offsetY, // Update bottom coordinate
+        right: offsetX,
+        bottom: offsetY,
       }));
     }
   };
 
   const handleMouseUp = () => {
     if (currentRectangle) {
-      // Calculate the coordinates for the rectangle
       const { left, top, right, bottom } = currentRectangle;
+
+      // Transforming coordinates to match PDF coordinate system
       const rectangleCoordinates = {
-        left: Math.min(left, right),
-        top: Math.min(top, bottom),
-        right: Math.max(left, right),
-        bottom: Math.max(top, bottom),
+        left: Math.min(left, right) / scaleRef.current,
+        top:
+          originalHeightRef.current - Math.max(top, bottom) / scaleRef.current,
+        right: Math.max(left, right) / scaleRef.current,
+        bottom:
+          originalHeightRef.current - Math.min(top, bottom) / scaleRef.current,
       };
 
       // Add the rectangle coordinates to the allRectangles state
@@ -73,16 +87,13 @@ const PdfViewer = () => {
   };
 
   const handleSubmit = () => {
-    // URL of the API endpoint
     const apiUrl =
       "https://crm.nablasol.net/custom/service/v4_1_custom/nblDmsPdfExtract.php";
 
-    // Data to be sent to the API
     const formData = new FormData();
     formData.append("pdfFile", pdfFile);
     formData.append("coordinates", JSON.stringify(allRectangles));
 
-    // Fetch request options
     const requestOptions = {
       method: "POST",
       body: formData,
@@ -91,7 +102,7 @@ const PdfViewer = () => {
     fetch(apiUrl, requestOptions)
       .then((response) => {
         if (response.ok) {
-          alert("data sent successfully");
+          alert("Data sent successfully");
           return response.json();
         } else {
           throw new Error("Failed to send data to the API");
@@ -127,8 +138,6 @@ const PdfViewer = () => {
     };
   }, [currentRectangle, handleMouseUp]);
 
-  console.log(pdfFile);
-
   return (
     <div>
       <div {...getRootProps()} style={dropzoneStyle}>
@@ -148,6 +157,8 @@ const PdfViewer = () => {
               className="pdf-page"
               renderAnnotationLayer={true}
               renderTextLayer={false}
+              onLoadSuccess={onPageLoadSuccess}
+              inputRef={pageRef}
             />
           </Document>
           {rectangles.map((rect, index) => (
